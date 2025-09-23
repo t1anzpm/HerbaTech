@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="es" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HerbaTech · ESP32</title>
+
+  <!-- Mejores colores en móviles y dark UI -->
+  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+
+  <!-- CSP mínimo (ajustada para permitir JS inline de esta página) -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self';">
+
+  <style>
+    :root{
+      --bg:#0f172a; --card:#111827; --ink:#e5e7eb; --muted:#9ca3af;
+      --ok:#16a34a; --warn:#f59e0b; --bad:#ef4444; --brand:#22d3ee;
+      --border:#1f2937; --border-2:#334155; --border-3:#475569;
+      --focus:#7dd3fc;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.4 system-ui,Segoe UI,Roboto,Arial}
+    header{display:flex;gap:.6rem;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+    header h1{margin:0;font-size:20px;font-weight:700}
+    .grid{display:grid;gap:14px;padding:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;min-height:92px}
+    .k{font-size:13px;color:var(--muted)} .v{font-size:28px;font-weight:700}
+    .row{display:flex;justify-content:space-between;align-items:flex-end;gap:8px}
+    .unit{font-size:14px;color:var(--muted);margin-left:6px}
+    .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;line-height:1.8}
+
+    /* Fallbacks sin color-mix (compatibilidad) */
+    .ok{color:var(--ok); background:rgba(22,163,74,.18)}
+    .warn{color:var(--warn); background:rgba(245,158,11,.18)}
+    .bad{color:var(--bad); background:rgba(239,68,68,.18)}
+    .muted{color:var(--muted); background:rgba(148,163,184,.12)}
+
+    @supports (background: color-mix(in oklab, white, black)) {
+      .ok  { background: color-mix(in oklab, var(--ok) 18%, transparent) }
+      .warn{ background: color-mix(in oklab, var(--warn) 18%, transparent) }
+      .bad { background: color-mix(in oklab, var(--bad) 18%, transparent) }
+    }
+
+    .switch{--w:44px;--h:26px;position:relative;display:inline-block;width:var(--w);height:var(--h)}
+    .switch input{opacity:0;position:absolute;inset:0;margin:0}
+    .slider{position:absolute;inset:0;background:#374151;border-radius:999px;transition:transform .2s, background .2s}
+    .slider:before{content:"";position:absolute;height:20px;width:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s}
+    input:checked + .slider{background:var(--brand)}
+    input:checked + .slider:before{transform:translateX(18px)}
+    input:focus-visible + .slider{outline:3px solid var(--focus);outline-offset:2px}
+
+    footer{padding:10px 16px;color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    pre{white-space:pre-wrap;background:#0b1220;border:1px solid var(--border);border-radius:10px;padding:10px;max-height:300px;overflow:auto}
+    button{background:#1f2937;border:1px solid var(--border-2);color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer}
+    button:hover{border-color:var(--border-3)}
+    button:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+    .hidden{display:none}
+
+    /* Reduce motion si el usuario lo prefiere */
+    @media (prefers-reduced-motion: reduce){
+      .slider, .slider:before{transition:none}
+    }
+
+    /* Banner de estado/red */
+    .banner{padding:8px 12px;border:1px dashed var(--border-2);border-radius:10px;margin:0 16px;color:var(--muted);font-size:13px}
+    .banner.error{border-color:var(--bad);color:#fecaca;background:rgba(239,68,68,.06)}
+    .banner.warn{border-color:var(--warn);color:#fed7aa;background:rgba(245,158,11,.06)}
+
+    /* Colores del resaltado JSON */
+    .json-string  { color:#22d3ee; }
+    .json-number  { color:#f59e0b; }
+    .json-boolean { color:#16a34a; }
+    .json-null    { color:#ef4444; }
+    .json-key     { color:#9ca3af; }
+    .debug-toolbar{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-bottom:8px}
+    .toolbar-note{font-size:12px;color:var(--muted);margin-right:auto}
+  </style>
+</head>
+<body>
+<header>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h10"/></svg>
+  <h1>HerbaTech · ESP32</h1>
+  <span id="ts" class="muted" aria-live="polite">· cargando…</span>
+</header>
+
+<!-- Banners de estado -->
+<div id="netBanner" class="banner warn hidden" role="status" aria-live="polite">Sin conexión a Internet. Intentando reconectar…</div>
+<div id="errBanner" class="banner error hidden" role="alert">Error obteniendo métricas. Se reintentará automáticamente.</div>
+
+<section class="grid">
+  <div class="card" aria-labelledby="k-temp">
+    <div id="k-temp" class="k">Temperatura aire</div>
+    <div class="row">
+      <div><span id="t" class="v" aria-live="polite">–</span><span class="unit">°C</span></div>
+      <span id="tBadge" class="badge muted" aria-live="polite">sin dato</span>
+    </div>
+  </div>
+
+  <div class="card" aria-labelledby="k-rh">
+    <div id="k-rh" class="k">Humedad relativa</div>
+    <div class="row">
+      <div><span id="rh" class="v" aria-live="polite">–</span><span class="unit">%</span></div>
+      <span id="rhBadge" class="badge muted" aria-live="polite">sin dato</span>
+    </div>
+  </div>
+
+  <div class="card" aria-labelledby="k-soil">
+    <div id="k-soil" class="k">Humedad suelo</div>
+    <div class="row">
+      <div><span id="soil" class="v" aria-live="polite">–</span><span class="unit">%</span></div>
+      <span id="soilBadge" class="badge muted" aria-live="polite">sin dato</span>
+    </div>
+  </div>
+
+  <div class="card" aria-labelledby="k-ph">
+    <div id="k-ph" class="k">pH agua riego</div>
+    <div class="row">
+      <div><span id="ph" class="v" aria-live="polite">–</span></div>
+      <span id="phBadge" class="badge muted" aria-live="polite">sin dato</span>
+    </div>
+  </div>
+
+  <div class="card" aria-labelledby="k-light">
+    <div id="k-light" class="k">Luz artificial</div>
+    <div class="row" style="align-items:center">
+      <label class="switch" aria-label="Interruptor de luz artificial">
+        <input id="light" type="checkbox" role="switch" aria-checked="false" />
+        <span class="slider" aria-hidden="true"></span>
+      </label>
+      <span id="lightBadge" class="badge muted" aria-live="polite">desconocido</span>
+    </div>
+    <div class="k" style="margin-top:8px">
+      Confirmación (sensor AC): <span id="lightSense" class="badge muted" aria-live="polite">–</span>
+    </div>
+  </div>
+
+  <div class="card" aria-labelledby="k-conn">
+    <div id="k-conn" class="k">Conexión</div>
+    <div>RSSI: <b id="rssi">–</b> dBm</div>
+    <div>IP: <b id="ip">–</b></div>
+    <div>Edad del dato: <b id="age">–</b></div>
+    <div style="margin-top:10px"><button id="refresh" type="button">Actualizar ahora</button></div>
+  </div>
+
+  <div class="card" style="grid-column:1/-1" aria-labelledby="k-debug">
+    <div class="row" style="align-items:center">
+      <div id="k-debug" class="k">Debug JSON</div>
+    </div>
+
+    <div class="debug-toolbar">
+      <span class="toolbar-note">Vista con resaltado; el botón copia el JSON crudo.</span>
+      <button id="copyJson" type="button" aria-label="Copiar JSON">Copiar JSON</button>
+    </div>
+
+    <pre id="raw" aria-live="polite">cargando…</pre>
+  </div>
+</section>
+
+<footer>
+  <span>HerbaTech MVP</span>
+  <span id="clock" aria-live="polite"></span>
+</footer>
+
+<script>
+  // ===== Config =====
+  const API_BASE = ''; // mismo origen. Cambia a 'http://herbatech.local' si usas mDNS
+  const TZ = 'America/Santiago';
+  const LOCALE = 'es-CL';
+
+  // Rango objetivo centralizado (más fácil de mantener por cultivo/etapa)
+  const RANGES = {
+    airTemp:   { good:[18,30], warn:[16,32] },   // fuera de warn => bad
+    airRH:     { good:[50,80], warn:[40,85] },
+    soilMoist: { good:[25,45], warn:[20,55] },
+    waterPH:   { good:[5.5,6.5], warn:[5.0,7.0] }
+  };
+
+  // ===== Utils =====
+  const $ = id => document.getElementById(id);
+  const cls = (el, c) => el.className = 'badge ' + c;
+  const nf0 = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 0 });
+  const nf1 = new Intl.NumberFormat(LOCALE, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const nf2 = new Intl.NumberFormat(LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  function nowStr(){ return new Date().toLocaleString(LOCALE, { timeZone: TZ }); }
+  function timeStr(){ return new Date().toLocaleTimeString(LOCALE, { timeZone: TZ }); }
+
+  // Clasificación con zona "warn" amortiguadora
+  function badgeFrom(v, {good:[gL,gH], warn:[wL,wH]}){
+    if (v == null || Number.isNaN(v)) return ['muted','sin dato'];
+    if (v >= gL && v <= gH) return ['ok','óptimo'];
+    if (v >= wL && v <= wH) return ['warn','revisar'];
+    return ['bad','fuera de rango'];
+  }
+
+  // fetch con timeout
+  function fetchWithTimeout(resource, options = {}) {
+    const { timeout = 4000 } = options;
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    return fetch(resource, { ...options, signal: controller.signal })
+      .finally(() => clearTimeout(id));
+  }
+
+  // Resaltado de sintaxis para JSON
+  function syntaxHighlight(json) {
+    let text = (typeof json === 'string') ? json : JSON.stringify(json, null, 2);
+    text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return text.replace(
+      /("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(?:\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)/g,
+      m => {
+        let cls = 'json-number';
+        if (m[0] === '"') cls = /:$/.test(m) ? 'json-key' : 'json-string';
+        else if (/true|false/.test(m)) cls = 'json-boolean';
+        else if (/null/.test(m)) cls = 'json-null';
+        return `<span class="${cls}">${m}</span>`;
+      }
+    );
+  }
+
+  // ===== Datos =====
+  let lastTs = null;
+  let lastJsonString = '{}'; // Para copiar el JSON crudo exactamente
+
+  async function getMetrics(){
+    const r = await fetchWithTimeout(`${API_BASE}/api/metrics`, { cache:'no-store', timeout: 4000 });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return await r.json();
+  }
+
+  function setNetBanner(){
+    $('netBanner').classList.toggle('hidden', navigator.onLine);
+  }
+  window.addEventListener('online', setNetBanner);
+  window.addEventListener('offline', setNetBanner);
+  setNetBanner();
+
+  async function refresh(){
+    const j = await getMetrics();
+    // Guardamos crudo y mostramos coloreado
+    lastJsonString = JSON.stringify(j, null, 2);
+    $('raw').innerHTML = syntaxHighlight(lastJsonString);
+
+    $('rssi').textContent = (j.rssi ?? '–');
+    $('ip').textContent   = location.host;
+
+    if (j.ts) lastTs = new Date(j.ts);
+    else lastTs = new Date();
+
+    const ageSec = Math.max(0, Math.round((Date.now() - lastTs.getTime())/1000));
+    $('age').textContent = `${ageSec} s`;
+
+    // Aire
+    const t  = j.air?.temp_c;
+    const rh = j.air?.rh_pct;
+    $('t').textContent  = (t!=null)  ? nf1.format(t)  : '–';
+    $('rh').textContent = (rh!=null) ? nf0.format(rh) : '–';
+    const [tc,tb] = badgeFrom(t,  RANGES.airTemp);
+    const [hc,hb] = badgeFrom(rh, RANGES.airRH);
+    cls($('tBadge'), tc);  $('tBadge').textContent  = tb;
+    cls($('rhBadge'), hc); $('rhBadge').textContent = hb;
+
+    // Suelo
+    const sm = j.soil?.moisture_pct;
+    $('soil').textContent = (sm!=null) ? nf0.format(sm) : '–';
+    const [sc,sb] = badgeFrom(sm, RANGES.soilMoist);
+    cls($('soilBadge'), sc); $('soilBadge').textContent = sb;
+
+    // pH
+    const ph = j.water?.ph;
+    $('ph').textContent = (ph!=null)? nf2.format(ph) : '–';
+    const [pc,pbb] = badgeFrom(ph, RANGES.waterPH);
+    cls($('phBadge'), pc); $('phBadge').textContent = pbb;
+
+    // Luz
+    const commanded = !!j.light?.commanded_on;
+    const sensed    = j.light?.sensed_on;
+    const sw = $('light');
+    sw.checked = commanded;
+    sw.setAttribute('aria-checked', String(commanded));
+    cls($('lightBadge'), commanded ? 'ok' : 'bad');
+    $('lightBadge').textContent = commanded ? 'encendida' : 'apagada';
+    const sensedCls = (sensed===true)?'ok':(sensed===false?'warn':'muted');
+    cls($('lightSense'), sensedCls);
+    $('lightSense').textContent = (sensed===true)?'confirmada':(sensed===false?'sin confirmación':'—');
+
+    // Timestamps
+    $('ts').textContent = ' · Última actualización ' + timeStr();
+    $('clock').textContent = nowStr();
+
+    // Oculta errores si estaba mostrando
+    $('errBanner').classList.add('hidden');
+  }
+
+  // POST luz con rollback si falla
+  $('light').addEventListener('change', async (e)=>{
+    const sw = e.target;
+    const desired = sw.checked;
+    sw.disabled = true;
+    $('refresh').disabled = true;
+    try{
+      const r = await fetchWithTimeout(`${API_BASE}/api/light`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ on: desired }), timeout: 4000
+      });
+      if (!r.ok && r.status !== 204) throw new Error(`HTTP ${r.status}`);
+    }catch(err){
+      sw.checked = !desired; // revertir
+    }finally{
+      sw.disabled = false;
+      $('refresh').disabled = false;
+      try { await refresh(); } catch {}
+    }
+  });
+
+  $('refresh').addEventListener('click', async ()=>{
+    const btn = $('refresh');
+    btn.disabled = true;
+    try { await refresh(); }
+    catch(e){ $('raw').textContent = 'Error: ' + (e.message||e); }
+    finally { btn.disabled = false; }
+  });
+
+  // Copiar JSON crudo al portapapeles
+  $('copyJson').addEventListener('click', async ()=>{
+    try{
+      await navigator.clipboard.writeText(lastJsonString);
+      $('copyJson').textContent = 'Copiado ✓';
+      setTimeout(()=>{ $('copyJson').textContent = 'Copiar JSON'; }, 1200);
+    }catch(e){
+      // Fallback si el navegador no permite clipboard API
+      const ta = document.createElement('textarea');
+      ta.value = lastJsonString;
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand('copy'); $('copyJson').textContent = 'Copiado ✓'; }
+      catch{ $('copyJson').textContent = 'Error al copiar'; }
+      document.body.removeChild(ta);
+      setTimeout(()=>{ $('copyJson').textContent = 'Copiar JSON'; }, 1500);
+    }
+  });
+
+  // Auto-refresh con backoff
+  let interval = 3500, timer;
+  async function tick(){
+    try{
+      await refresh();
+      interval = 3500; // OK => normal
+    }catch(e){
+      $('raw').textContent = 'Error obteniendo métricas: ' + (e.message || e);
+      $('errBanner').classList.remove('hidden');
+      // poner badges en "muted" para indicar dato no fiable
+      ['tBadge','rhBadge','soilBadge','phBadge','lightSense','lightBadge'].forEach(id=>cls($(id),'muted'));
+      interval = Math.min(Math.round(interval * 1.7), 15000); // backoff
+    }finally{
+      clearTimeout(timer);
+      timer = setTimeout(tick, interval);
+    }
+  }
+  tick();
+
+  // (Opcional futuro) SSE/WebSocket:
+  // const sse = new EventSource(`${API_BASE}/api/metrics/stream`);
+  // sse.onmessage = (ev) => { const j = JSON.parse(ev.data); ... };
+
+</script>
+</body>
+</html>
