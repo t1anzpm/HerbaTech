@@ -236,6 +236,19 @@
   window.addEventListener('online', setNetBanner);
   window.addEventListener('offline', setNetBanner);
   setNetBanner();
+  function setReading({value, status, elValue, elBadge, formatter, ranges}) {
+  if (status === 'no_sensor') {
+    elValue.textContent = '—';
+    cls(elBadge, 'muted');
+    elBadge.textContent = 'sensor no conectado';
+    return;
+  }
+  const v = value;
+  elValue.textContent = (v != null && !Number.isNaN(v)) ? formatter(v) : '–';
+  const [c, txt] = badgeFrom(v, ranges);
+  cls(elBadge, c); elBadge.textContent = txt;
+}
+
 
   async function refresh(){
     const j = await getMetrics();
@@ -253,26 +266,43 @@
     $('age').textContent = `${ageSec} s`;
 
     // Aire
-    const t  = j.air?.temp_c;
-    const rh = j.air?.rh_pct;
-    $('t').textContent  = (t!=null)  ? nf1.format(t)  : '–';
-    $('rh').textContent = (rh!=null) ? nf0.format(rh) : '–';
-    const [tc,tb] = badgeFrom(t,  RANGES.airTemp);
-    const [hc,hb] = badgeFrom(rh, RANGES.airRH);
-    cls($('tBadge'), tc);  $('tBadge').textContent  = tb;
-    cls($('rhBadge'), hc); $('rhBadge').textContent = hb;
+setReading({
+  value: j.air?.temp_c,
+  status: j.air?.status,
+  elValue: $('t'),
+  elBadge: $('tBadge'),
+  formatter: v => nf1.format(v),
+  ranges: RANGES.airTemp
+});
+setReading({
+  value: j.air?.rh_pct,
+  status: j.air?.status,
+  elValue: $('rh'),
+  elBadge: $('rhBadge'),
+  formatter: v => nf0.format(v),
+  ranges: RANGES.airRH
+});
 
-    // Suelo
-    const sm = j.soil?.moisture_pct;
-    $('soil').textContent = (sm!=null) ? nf0.format(sm) : '–';
-    const [sc,sb] = badgeFrom(sm, RANGES.soilMoist);
-    cls($('soilBadge'), sc); $('soilBadge').textContent = sb;
+// Suelo
+setReading({
+  value: j.soil?.moisture_pct,
+  status: j.soil?.status,
+  elValue: $('soil'),
+  elBadge: $('soilBadge'),
+  formatter: v => nf0.format(v),
+  ranges: RANGES.soilMoist
+});
 
-    // pH
-    const ph = j.water?.ph;
-    $('ph').textContent = (ph!=null)? nf2.format(ph) : '–';
-    const [pc,pbb] = badgeFrom(ph, RANGES.waterPH);
-    cls($('phBadge'), pc); $('phBadge').textContent = pbb;
+// pH
+setReading({
+  value: j.water?.ph,
+  status: j.water?.status,
+  elValue: $('ph'),
+  elBadge: $('phBadge'),
+  formatter: v => nf2.format(v),
+  ranges: RANGES.waterPH
+});
+
 
     // Luz
     const commanded = !!j.light?.commanded_on;

@@ -24,17 +24,26 @@ float ph_a = -0.0048, ph_b = 13.2;  // pH = a*raw + b (tras calibración 4.01/7.
 Adafruit_SHT31 sht31 = Adafruit_SHT31();
 WebServer server(80);
 bool lightCmd = false;
+bool sht_ok = false;          // para saber si hay SHT31
 
 // ============ Utilidades ============
+
 template<int N>
 int medianRead(int pin) {
   static_assert(N > 0, "N must be > 0");
   int v[N];
   for (int i = 0; i < N; i++) { v[i] = analogRead(pin); delay(5); }
+  // ordenación simple
   for (int i = 0; i < N - 1; i++)
     for (int j = i + 1; j < N; j++)
       if (v[j] < v[i]) { int t = v[i]; v[i] = v[j]; v[j] = t; }
   return v[N / 2];
+}
+
+// Heurística muy simple para detectar pin “al aire” / sensor desconectado
+bool adcLooksDisconnected(int raw) {
+  // cerca de extremos del ADC o valores obviamente fuera de nuestro rango típico
+  return (raw < 60 || raw > 4030);
 }
 
 float soilPctFromRaw(int raw) {
@@ -43,34 +52,55 @@ float soilPctFromRaw(int raw) {
 }
 
 // ============ Handlers HTTP ============
+
 void handleMetrics() {
   StaticJsonDocument<512> d;
 
-  // Aire
-  float t = sht31.readTemperature();
-  float h = sht31.readHumidity();
+  // ---------------- Aire (SHT31) ----------------
+  if (sht_ok) {
+    float t = sht31.readTemperature();
+    float h = sht31.readHumidity();
+    if (isnan(t) || isnan(h)) {
+      d["air"]["status"] = "no_sensor";
+    } else {
+      d["air"]["temp_c"] = t;
+      d["air"]["rh_pct"] = h;
+      d["air"]["status"] = "ok";
+    }
+  } else {
+    d["air"]["status"] = "no_sensor";
+  }
 
-  // Suelo
-  int   soilRaw  = medianRead<9>(PIN_SOIL);
-  float soilPct  = soilPctFromRaw(soilRaw);
+  // ---------------- Suelo (ADC) ----------------
+  int soilRaw = medianRead<9>(PIN_SOIL);
+  if (adcLooksDisconnected(soilRaw)) {
+    d["soil"]["status"] = "no_sensor";
+  } else {
+    d["soil"]["moisture_pct"] = soilPctFromRaw(soilRaw);
+    d["soil"]["raw"]          = soilRaw;
+    d["soil"]["status"]       = "ok";
+  }
 
-  // pH
-  int   phRaw = medianRead<15>(PIN_PH);
-  float phVal = ph_a * phRaw + ph_b;
+  // ---------------- pH (ADC) ----------------
+  int phRaw = medianRead<15>(PIN_PH);
+  if (adcLooksDisconnected(phRaw)) {
+    d["water"]["status"] = "no_sensor";
+  } else {
+    float phVal = ph_a * phRaw + ph_b;
+    d["water"]["ph"]   = phVal;
+    d["water"]["raw"]  = phRaw;
+    d["water"]["status"] = "ok";
+  }
 
-  // Luz
-  bool acOn = digitalRead(PIN_ACSENSE); // si no hay sensor, quedará 0
-
-  d["air"]["temp_c"]         = t;
-  d["air"]["rh_pct"]         = h;
-  d["soil"]["moisture_pct"]  = soilPct;
-  d["soil"]["raw"]           = soilRaw;
-  d["water"]["ph"]           = phVal;
-  d["water"]["raw"]          = phRaw;
+  // ---------------- Luz ----------------
+  bool acOn = digitalRead(PIN_ACSENSE); // si no hay sensor, normalmente queda 0
   d["light"]["commanded_on"] = lightCmd;
   d["light"]["sensed_on"]    = acOn;
-  d["rssi"]                  = WiFi.RSSI();
 
+  // Conexión
+  d["rssi"] = WiFi.RSSI();
+
+  // Respuesta
   server.sendHeader("Cache-Control", "no-store");
   String out; serializeJson(d, out);
   server.send(200, "application/json", out);
@@ -92,6 +122,7 @@ void handleNotFound() {
 }
 
 // ============ Setup / Loop ============
+
 void setup() {
   Serial.begin(115200);
 
@@ -106,7 +137,8 @@ void setup() {
 
   // I2C + SHT31
   Wire.begin(21, 22);
-  if (!sht31.begin(0x44)) {
+  sht_ok = sht31.begin(0x44);
+  if (!sht_ok) {
     Serial.println("No se encontró SHT31 en 0x44");
   }
 
@@ -140,7 +172,6 @@ void setup() {
   // API
   server.on("/api/metrics", HTTP_GET,  handleMetrics);
   server.on("/api/light",   HTTP_POST, handleLight);
-  
   server.onNotFound(handleNotFound);
 
   server.begin();
