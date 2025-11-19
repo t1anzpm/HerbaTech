@@ -3,89 +3,89 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>HerbaTech · ESP32</title>
-
-  <!-- Mejores colores en móviles y dark UI -->
-  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+  <title>Greenhouse Future</title>
+  <meta name="theme-color" content="#052e16" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-
-  <!-- CSP mínimo (ajustada para permitir JS inline de esta página) -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self';">
 
   <style>
     :root{
-      --bg:#0f172a; --card:#111827; --ink:#e5e7eb; --muted:#9ca3af;
-      --ok:#16a34a; --warn:#f59e0b; --bad:#ef4444; --brand:#22d3ee;
-      --border:#1f2937; --border-2:#334155; --border-3:#475569;
-      --focus:#7dd3fc;
+      --bg:#0b1220;
+      --card:#0e1b12;
+      --ink:#e5e7eb;
+      --muted:#9ca3af;
+      --brand:#22c55e;
+      --focus:#86efac;
+      --ok:#16a34a;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --border:#1f2937;
+      --border-2:#2b3a2f;
+      --border-3:#3b4f42;
     }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.4 system-ui,Segoe UI,Roboto,Arial}
-    header{display:flex;gap:.6rem;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap}
-    header h1{margin:0;font-size:20px;font-weight:700}
+    header{
+      display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;
+      padding:16px 20px;border-bottom:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(34,197,94,.10), transparent);
+    }
+    header h1{margin:0;font-size:20px;font-weight:800;letter-spacing:.2px}
     .grid{display:grid;gap:14px;padding:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;min-height:92px}
-    .k{font-size:13px;color:var(--muted)} .v{font-size:28px;font-weight:700}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border-2);
+      border-radius:12px;padding:14px;min-height:92px;
+      box-shadow:0 1px 0 rgba(34,197,94,.08) inset;
+    }
+    .k{font-size:13px;color:var(--muted)}
+    .v{font-size:28px;font-weight:800;letter-spacing:.2px}
     .row{display:flex;justify-content:space-between;align-items:flex-end;gap:8px}
     .unit{font-size:14px;color:var(--muted);margin-left:6px}
-    .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;line-height:1.8}
-
-    /* Fallbacks sin color-mix (compatibilidad) */
-    .ok{color:var(--ok); background:rgba(22,163,74,.18)}
-    .warn{color:var(--warn); background:rgba(245,158,11,.18)}
-    .bad{color:var(--bad); background:rgba(239,68,68,.18)}
-    .muted{color:var(--muted); background:rgba(148,163,184,.12)}
-
-    @supports (background: color-mix(in oklab, white, black)) {
-      .ok  { background: color-mix(in oklab, var(--ok) 18%, transparent) }
-      .warn{ background: color-mix(in oklab, var(--warn) 18%, transparent) }
-      .bad { background: color-mix(in oklab, var(--bad) 18%, transparent) }
-    }
-
+    .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;line-height:1.8;border:1px solid transparent}
+    .ok{color:var(--ok);   background:rgba(22,163,74,.16);  border-color:rgba(22,163,74,.28)}
+    .warn{color:var(--warn); background:rgba(245,158,11,.16); border-color:rgba(245,158,11,.28)}
+    .bad{color:var(--bad);  background:rgba(239,68,68,.16); border-color:rgba(239,68,68,.28)}
+    .muted{color:var(--muted); background:rgba(148,163,184,.12); border-color:rgba(148,163,184,.20)}
     .switch{--w:44px;--h:26px;position:relative;display:inline-block;width:var(--w);height:var(--h)}
     .switch input{opacity:0;position:absolute;inset:0;margin:0}
-    .slider{position:absolute;inset:0;background:#374151;border-radius:999px;transition:transform .2s, background .2s}
+    .slider{position:absolute;inset:0;background:#1f2937;border-radius:999px;transition:transform .2s, background .2s, box-shadow .2s}
     .slider:before{content:"";position:absolute;height:20px;width:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s}
-    input:checked + .slider{background:var(--brand)}
+    input:checked + .slider{background:var(--brand); box-shadow:0 0 0 2px rgba(34,197,94,.25)}
     input:checked + .slider:before{transform:translateX(18px)}
     input:focus-visible + .slider{outline:3px solid var(--focus);outline-offset:2px}
-
     footer{padding:10px 16px;color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
     pre{white-space:pre-wrap;background:#0b1220;border:1px solid var(--border);border-radius:10px;padding:10px;max-height:300px;overflow:auto}
-    button{background:#1f2937;border:1px solid var(--border-2);color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer}
+    button{
+      background:#0f1a13;border:1px solid var(--border-2);color:var(--ink);
+      padding:8px 12px;border-radius:10px;cursor:pointer
+    }
     button:hover{border-color:var(--border-3)}
     button:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
     .hidden{display:none}
-
-    /* Reduce motion si el usuario lo prefiere */
-    @media (prefers-reduced-motion: reduce){
-      .slider, .slider:before{transition:none}
-    }
-
-    /* Banner de estado/red */
-    .banner{padding:8px 12px;border:1px dashed var(--border-2);border-radius:10px;margin:0 16px;color:var(--muted);font-size:13px}
+    .banner{padding:8px 12px;border:1px dashed var(--border-2);border-radius:10px;margin:0 16px;color:var(--muted);font-size:13px;background:rgba(34,197,94,.04)}
     .banner.error{border-color:var(--bad);color:#fecaca;background:rgba(239,68,68,.06)}
     .banner.warn{border-color:var(--warn);color:#fed7aa;background:rgba(245,158,11,.06)}
-
-    /* Colores del resaltado JSON */
-    .json-string  { color:#22d3ee; }
-    .json-number  { color:#f59e0b; }
-    .json-boolean { color:#16a34a; }
-    .json-null    { color:#ef4444; }
-    .json-key     { color:#9ca3af; }
     .debug-toolbar{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-bottom:8px}
-    .toolbar-note{font-size:12px;color:var(--muted);margin-right:auto}
+    #lightSpark {
+      width: 100%;
+      height: 46px;
+      margin-top: 8px;
+      background: rgba(0,0,0,0.06);
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
 <header>
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h10"/></svg>
-  <h1>HerbaTech · ESP32</h1>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h10"/>
+  </svg>
+  <h1>Greenhouse Future</h1>
   <span id="ts" class="muted" aria-live="polite">· cargando…</span>
 </header>
 
-<!-- Banners de estado -->
 <div id="netBanner" class="banner warn hidden" role="status" aria-live="polite">Sin conexión a Internet. Intentando reconectar…</div>
 <div id="errBanner" class="banner error hidden" role="alert">Error obteniendo métricas. Se reintentará automáticamente.</div>
 
@@ -115,26 +115,30 @@
   </div>
 
   <div class="card" aria-labelledby="k-ph">
-    <div id="k-ph" class="k">pH agua riego</div>
+    <div id="k-ph" class="k">Nivel agua de riego</div>
     <div class="row">
       <div><span id="ph" class="v" aria-live="polite">–</span></div>
       <span id="phBadge" class="badge muted" aria-live="polite">sin dato</span>
     </div>
   </div>
-
-  <div class="card" aria-labelledby="k-light">
-    <div id="k-light" class="k">Luz artificial</div>
-    <div class="row" style="align-items:center">
-      <label class="switch" aria-label="Interruptor de luz artificial">
-        <input id="light" type="checkbox" role="switch" aria-checked="false" />
-        <span class="slider" aria-hidden="true"></span>
-      </label>
-      <span id="lightBadge" class="badge muted" aria-live="polite">desconocido</span>
+<!-- TARJETA: LUZ -->
+<div class="card" aria-labelledby="k-light">
+  <div id="k-light" class="k">Luz</div>
+  <div class="row">
+    <!-- valor de luz -->
+    <div style="display:flex; align-items:flex-end; gap:4px;">
+      <span id="envLight" class="v" aria-live="polite">–</span>
+      <span class="unit">%</span>
     </div>
-    <div class="k" style="margin-top:8px">
-      Confirmación (sensor AC): <span id="lightSense" class="badge muted" aria-live="polite">–</span>
-    </div>
+    <!-- switch -->
+    <label class="switch" aria-label="Interruptor de luz">
+      <input id="light" type="checkbox" role="switch" aria-checked="false" />
+      <span class="slider" aria-hidden="true"></span>
+    </label>
   </div>
+  <span id="envLightBadge" class="badge muted" aria-live="polite">sin dato</span>
+  <canvas id="lightSpark" width="260" height="46" aria-label="Histórico de luz"></canvas>
+</div>
 
   <div class="card" aria-labelledby="k-conn">
     <div id="k-conn" class="k">Conexión</div>
@@ -148,253 +152,195 @@
     <div class="row" style="align-items:center">
       <div id="k-debug" class="k">Debug JSON</div>
     </div>
-
     <div class="debug-toolbar">
-      <span class="toolbar-note">Vista con resaltado; el botón copia el JSON crudo.</span>
       <button id="copyJson" type="button" aria-label="Copiar JSON">Copiar JSON</button>
     </div>
-
     <pre id="raw" aria-live="polite">cargando…</pre>
   </div>
 </section>
 
 <footer>
-  <span>HerbaTech MVP</span>
+  <span>Greenhouse Future</span>
   <span id="clock" aria-live="polite"></span>
 </footer>
-
 <script>
-  // ===== Config =====
-  const API_BASE = ''; // mismo origen. Cambia a 'http://herbatech.local' si usas mDNS
-  const TZ = 'America/Santiago';
-  const LOCALE = 'es-CL';
-
-  // Rango objetivo centralizado (más fácil de mantener por cultivo/etapa)
-  const RANGES = {
-    airTemp:   { good:[18,30], warn:[16,32] },   // fuera de warn => bad
-    airRH:     { good:[50,80], warn:[40,85] },
-    soilMoist: { good:[25,45], warn:[20,55] },
-    waterPH:   { good:[5.5,6.5], warn:[5.0,7.0] }
-  };
-
-  // ===== Utils =====
+  const API_BASE = '';
   const $ = id => document.getElementById(id);
-  const cls = (el, c) => el.className = 'badge ' + c;
-  const nf0 = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 0 });
-  const nf1 = new Intl.NumberFormat(LOCALE, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-  const nf2 = new Intl.NumberFormat(LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  function nowStr(){ return new Date().toLocaleString(LOCALE, { timeZone: TZ }); }
-  function timeStr(){ return new Date().toLocaleTimeString(LOCALE, { timeZone: TZ }); }
+  const lightHistory = [];
+  const LIGHT_MAX_POINTS = 30;
 
-  // Clasificación con zona "warn" amortiguadora
-  function badgeFrom(v, {good:[gL,gH], warn:[wL,wH]}){
-    if (v == null || Number.isNaN(v)) return ['muted','sin dato'];
-    if (v >= gL && v <= gH) return ['ok','óptimo'];
-    if (v >= wL && v <= wH) return ['warn','revisar'];
-    return ['bad','fuera de rango'];
-  }
+  async function fetchMetrics(manual = false) {
+    try {
+      const res = await fetch(API_BASE + '/api/metrics', { cache:'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
 
-  // fetch con timeout
-  function fetchWithTimeout(resource, options = {}) {
-    const { timeout = 4000 } = options;
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
-    return fetch(resource, { ...options, signal: controller.signal })
-      .finally(() => clearTimeout(id));
-  }
+      // mostrar json
+      $('raw').textContent = JSON.stringify(data, null, 2);
+      $('errBanner').classList.add('hidden');
 
-  // Resaltado de sintaxis para JSON
-  function syntaxHighlight(json) {
-    let text = (typeof json === 'string') ? json : JSON.stringify(json, null, 2);
-    text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return text.replace(
-      /("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(?:\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)/g,
-      m => {
-        let cls = 'json-number';
-        if (m[0] === '"') cls = /:$/.test(m) ? 'json-key' : 'json-string';
-        else if (/true|false/.test(m)) cls = 'json-boolean';
-        else if (/null/.test(m)) cls = 'json-null';
-        return `<span class="${cls}">${m}</span>`;
+      // timestamp
+      const now = new Date();
+      $('ts').textContent = '· última actualización ' + now.toLocaleTimeString();
+
+      // ===== aire =====
+      if (data.air && data.air.status === 'ok') {
+        $('t').textContent  = data.air.temp_c.toFixed(1);
+        $('tBadge').textContent = 'óptimo';
+        $('tBadge').className = 'badge ok';
+
+        $('rh').textContent = data.air.rh_pct.toFixed(0);
+        $('rhBadge').textContent = 'óptimo';
+        $('rhBadge').className = 'badge ok';
+      } else {
+        $('t').textContent  = '–';
+        $('tBadge').textContent = 'sin dato';
+        $('tBadge').className = 'badge muted';
+        $('rh').textContent = '–';
+        $('rhBadge').textContent = 'sin dato';
+        $('rhBadge').className = 'badge muted';
       }
-    );
+
+      // ===== suelo =====
+      if (data.soil && data.soil.status === 'ok') {
+        $('soil').textContent = data.soil.moisture_pct.toFixed(0);
+        $('soilBadge').textContent = 'ok';
+        $('soilBadge').className = 'badge ok';
+      } else {
+        $('soil').textContent = '–';
+        $('soilBadge').textContent = 'sensor no conectado';
+        $('soilBadge').className = 'badge muted';
+      }
+
+      // ===== agua =====
+if (data.water && data.water.status === 'ok') {
+  $('ph').textContent = data.water.ph.toFixed(2);
+  $('phBadge').textContent = 'ok';
+  $('phBadge').className = 'badge ok';
+} else {
+  $('ph').textContent = '–';
+  $('phBadge').textContent = 'sensor no conectado';
+  $('phBadge').className = 'badge muted';
+}
+
+// ===== luz artificial (switch) =====
+if (data.light && typeof data.light.commanded_on !== 'undefined') {
+  const commanded = !!data.light.commanded_on;
+  $('light').checked = commanded;
+
+  // muestra estado en el badge según la luz artificial
+  if (commanded) {
+    $('envLightBadge').textContent = 'encendida';
+    $('envLightBadge').className = 'badge warn';
+  } else {
+    $('envLightBadge').textContent = 'apagada';
+    $('envLightBadge').className = 'badge muted';
+  }
+} else {
+  // si el backend no entrega data.light
+  $('light').checked = false;
+  $('envLightBadge').textContent = 'sin dato';
+  $('envLightBadge').className = 'badge muted';
+}
+
+// ===== luz ambiental =====
+if (data.env_light && data.env_light.status === 'ok') {
+  const pct = Math.round(data.env_light.percent ?? 0);
+  $('envLight').textContent = pct;
+
+  // solo sobrescribimos a "óptimo" si la luz artificial está apagada
+  if (!$('light').checked) {
+    $('envLightBadge').textContent = 'óptimo';
+    $('envLightBadge').className = 'badge ok';
   }
 
-  // ===== Datos =====
-  let lastTs = null;
-  let lastJsonString = '{}'; // Para copiar el JSON crudo exactamente
-
-  async function getMetrics(){
-    const r = await fetchWithTimeout(`${API_BASE}/api/metrics`, { cache:'no-store', timeout: 4000 });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return await r.json();
-  }
-
-  function setNetBanner(){
-    $('netBanner').classList.toggle('hidden', navigator.onLine);
-  }
-  window.addEventListener('online', setNetBanner);
-  window.addEventListener('offline', setNetBanner);
-  setNetBanner();
-  function setReading({value, status, elValue, elBadge, formatter, ranges}) {
-  if (status === 'no_sensor') {
-    elValue.textContent = '—';
-    cls(elBadge, 'muted');
-    elBadge.textContent = 'sensor no conectado';
-    return;
-  }
-  const v = value;
-  elValue.textContent = (v != null && !Number.isNaN(v)) ? formatter(v) : '–';
-  const [c, txt] = badgeFrom(v, ranges);
-  cls(elBadge, c); elBadge.textContent = txt;
+  // histórico del porcentaje de luz
+  lightHistory.push(pct);
+  if (lightHistory.length > LIGHT_MAX_POINTS) lightHistory.shift();
+  drawLightSpark();
+} else {
+  $('envLight').textContent = '–';
+  $('envLightBadge').textContent = 'sin dato';
+  $('envLightBadge').className = 'badge muted';
 }
 
 
-  async function refresh(){
-    const j = await getMetrics();
-    // Guardamos crudo y mostramos coloreado
-    lastJsonString = JSON.stringify(j, null, 2);
-    $('raw').innerHTML = syntaxHighlight(lastJsonString);
 
-    $('rssi').textContent = (j.rssi ?? '–');
-    $('ip').textContent   = location.host;
+      // ===== conexión =====
+      if (typeof data.rssi !== 'undefined') {
+        $('rssi').textContent = data.rssi;
+      }
+      $('ip').textContent = location.host;
 
-    if (j.ts) lastTs = new Date(j.ts);
-    else lastTs = new Date();
-
-    const ageSec = Math.max(0, Math.round((Date.now() - lastTs.getTime())/1000));
-    $('age').textContent = `${ageSec} s`;
-
-    // Aire
-setReading({
-  value: j.air?.temp_c,
-  status: j.air?.status,
-  elValue: $('t'),
-  elBadge: $('tBadge'),
-  formatter: v => nf1.format(v),
-  ranges: RANGES.airTemp
-});
-setReading({
-  value: j.air?.rh_pct,
-  status: j.air?.status,
-  elValue: $('rh'),
-  elBadge: $('rhBadge'),
-  formatter: v => nf0.format(v),
-  ranges: RANGES.airRH
-});
-
-// Suelo
-setReading({
-  value: j.soil?.moisture_pct,
-  status: j.soil?.status,
-  elValue: $('soil'),
-  elBadge: $('soilBadge'),
-  formatter: v => nf0.format(v),
-  ranges: RANGES.soilMoist
-});
-
-// pH
-setReading({
-  value: j.water?.ph,
-  status: j.water?.status,
-  elValue: $('ph'),
-  elBadge: $('phBadge'),
-  formatter: v => nf2.format(v),
-  ranges: RANGES.waterPH
-});
-
-
-    // Luz
-    const commanded = !!j.light?.commanded_on;
-    const sensed    = j.light?.sensed_on;
-    const sw = $('light');
-    sw.checked = commanded;
-    sw.setAttribute('aria-checked', String(commanded));
-    cls($('lightBadge'), commanded ? 'ok' : 'bad');
-    $('lightBadge').textContent = commanded ? 'encendida' : 'apagada';
-    const sensedCls = (sensed===true)?'ok':(sensed===false?'warn':'muted');
-    cls($('lightSense'), sensedCls);
-    $('lightSense').textContent = (sensed===true)?'confirmada':(sensed===false?'sin confirmación':'—');
-
-    // Timestamps
-    $('ts').textContent = ' · Última actualización ' + timeStr();
-    $('clock').textContent = nowStr();
-
-    // Oculta errores si estaba mostrando
-    $('errBanner').classList.add('hidden');
-  }
-
-  // POST luz con rollback si falla
-  $('light').addEventListener('change', async (e)=>{
-    const sw = e.target;
-    const desired = sw.checked;
-    sw.disabled = true;
-    $('refresh').disabled = true;
-    try{
-      const r = await fetchWithTimeout(`${API_BASE}/api/light`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ on: desired }), timeout: 4000
-      });
-      if (!r.ok && r.status !== 204) throw new Error(`HTTP ${r.status}`);
-    }catch(err){
-      sw.checked = !desired; // revertir
-    }finally{
-      sw.disabled = false;
-      $('refresh').disabled = false;
-      try { await refresh(); } catch {}
-    }
-  });
-
-  $('refresh').addEventListener('click', async ()=>{
-    const btn = $('refresh');
-    btn.disabled = true;
-    try { await refresh(); }
-    catch(e){ $('raw').textContent = 'Error: ' + (e.message||e); }
-    finally { btn.disabled = false; }
-  });
-
-  // Copiar JSON crudo al portapapeles
-  $('copyJson').addEventListener('click', async ()=>{
-    try{
-      await navigator.clipboard.writeText(lastJsonString);
-      $('copyJson').textContent = 'Copiado ✓';
-      setTimeout(()=>{ $('copyJson').textContent = 'Copiar JSON'; }, 1200);
-    }catch(e){
-      // Fallback si el navegador no permite clipboard API
-      const ta = document.createElement('textarea');
-      ta.value = lastJsonString;
-      document.body.appendChild(ta);
-      ta.select();
-      try{ document.execCommand('copy'); $('copyJson').textContent = 'Copiado ✓'; }
-      catch{ $('copyJson').textContent = 'Error al copiar'; }
-      document.body.removeChild(ta);
-      setTimeout(()=>{ $('copyJson').textContent = 'Copiar JSON'; }, 1500);
-    }
-  });
-
-  // Auto-refresh con backoff
-  let interval = 3500, timer;
-  async function tick(){
-    try{
-      await refresh();
-      interval = 3500; // OK => normal
-    }catch(e){
-      $('raw').textContent = 'Error obteniendo métricas: ' + (e.message || e);
+    } catch (err) {
+      console.warn(err);
       $('errBanner').classList.remove('hidden');
-      // poner badges en "muted" para indicar dato no fiable
-      ['tBadge','rhBadge','soilBadge','phBadge','lightSense','lightBadge'].forEach(id=>cls($(id),'muted'));
-      interval = Math.min(Math.round(interval * 1.7), 15000); // backoff
-    }finally{
-      clearTimeout(timer);
-      timer = setTimeout(tick, interval);
     }
   }
-  tick();
 
-  // (Opcional futuro) SSE/WebSocket:
-  // const sse = new EventSource(`${API_BASE}/api/metrics/stream`);
-  // sse.onmessage = (ev) => { const j = JSON.parse(ev.data); ... };
+  function drawLightSpark() {
+    const canvas = $('lightSpark');
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0,0,w,h);
 
+    if (lightHistory.length === 0) return;
+
+    const max = 100;
+    const step = w / Math.max(lightHistory.length - 1, 1);
+
+    ctx.fillStyle = 'rgba(34,197,94,0.06)';
+    ctx.fillRect(0,0,w,h);
+
+    ctx.strokeStyle = '#22c55e';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    lightHistory.forEach((val, idx) => {
+      const x = idx * step;
+      const y = h - (val / max) * (h - 6) - 3;
+      if (idx === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    const lastX = (lightHistory.length - 1) * step;
+    const lastY = h - (lightHistory[lightHistory.length - 1] / max) * (h - 6) - 3;
+    ctx.fillStyle = '#22c55e';
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 3, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // POST para encender/apagar
+  $('light').addEventListener('change', async (ev) => {
+    const desired = ev.target.checked;
+    try {
+      await fetch('/api/light', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ on: desired })
+      });
+    } catch(e) {
+      console.warn(e);
+    }
+  });
+
+  $('refresh').addEventListener('click', () => fetchMetrics(true));
+  $('copyJson').addEventListener('click', () => {
+    navigator.clipboard.writeText($('raw').textContent).catch(()=>{});
+  });
+
+  // reloj
+  setInterval(() => {
+    const now = new Date();
+    $('clock').textContent = now.toLocaleString('es-CL');
+  }, 1000);
+
+  fetchMetrics();
+  setInterval(fetchMetrics, 5000);
 </script>
+
 </body>
 </html>
